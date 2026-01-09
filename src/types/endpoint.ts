@@ -10,6 +10,15 @@ export interface PredefinedRequestBody {
   password: string;
 }
 
+export interface ResponseMetadata {
+  fields: Record<string, {
+    type?: string;
+    description?: string;
+    decimalPlaces?: number;
+    choices?: string[];
+  }>;
+}
+
 export interface Endpoint {
   id: string;
   name: string;
@@ -17,6 +26,7 @@ export interface Endpoint {
   path: string;
   description: string;
   responseBody: string;
+  metadata?: ResponseMetadata;
   statusCode: number;
   createdAt: string;
 }

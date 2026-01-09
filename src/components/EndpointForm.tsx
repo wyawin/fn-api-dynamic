@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Endpoint, HttpMethod } from '../types/endpoint';
+import { Endpoint, HttpMethod, ResponseMetadata } from '../types/endpoint';
 import { Save, FileJson } from 'lucide-react';
 import { ResponseBuilder } from './ResponseBuilder';
 
@@ -16,6 +16,7 @@ export function EndpointForm({ endpoint, onSave, onCancel }: EndpointFormProps) 
   const [description, setDescription] = useState('');
   const [statusCode, setStatusCode] = useState(200);
   const [responseBody, setResponseBody] = useState('');
+  const [metadata, setMetadata] = useState<ResponseMetadata | undefined>();
 
   useEffect(() => {
     if (endpoint) {
@@ -25,6 +26,7 @@ export function EndpointForm({ endpoint, onSave, onCancel }: EndpointFormProps) 
       setDescription(endpoint.description);
       setStatusCode(endpoint.statusCode);
       setResponseBody(endpoint.responseBody);
+      setMetadata(endpoint.metadata);
     }
   }, [endpoint]);
 
@@ -37,6 +39,7 @@ export function EndpointForm({ endpoint, onSave, onCancel }: EndpointFormProps) 
       description,
       statusCode,
       responseBody,
+      metadata,
     });
   };
 
@@ -155,7 +158,12 @@ export function EndpointForm({ endpoint, onSave, onCancel }: EndpointFormProps) 
             </p>
           </div>
 
-          <ResponseBuilder value={responseBody} onChange={setResponseBody} />
+          <ResponseBuilder
+            value={responseBody}
+            onChange={setResponseBody}
+            metadata={metadata}
+            onMetadataChange={setMetadata}
+          />
 
           <div className="flex gap-3 pt-4 border-t border-gray-200">
             <button

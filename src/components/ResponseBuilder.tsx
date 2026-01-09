@@ -14,9 +14,11 @@ interface ResponseField {
 interface ResponseBuilderProps {
   value: string;
   onChange: (value: string) => void;
+  metadata?: any;
+  onMetadataChange?: (metadata: any) => void;
 }
 
-export function ResponseBuilder({ value, onChange }: ResponseBuilderProps) {
+export function ResponseBuilder({ value, onChange, metadata, onMetadataChange }: ResponseBuilderProps) {
   const [showJsonViewer, setShowJsonViewer] = useState(false);
   const [fields, setFields] = useState<ResponseField[]>([]);
   const [lastParsedValue, setLastParsedValue] = useState<string>('');
@@ -64,20 +66,20 @@ export function ResponseBuilder({ value, onChange }: ResponseBuilderProps) {
     }
   };
 
-  const parseJsonToFields = (json: string) => {
+  const parseJsonToFields = (json: string, metadataObj?: any) => {
     try {
       const parsed = JSON.parse(json);
       const extractedFields: ResponseField[] = [];
 
       const resultsObj = parsed?.data?.results || parsed;
-      const metadata = parsed?._metadata?.fields || {};
+      const metadataFields = metadataObj?.fields || {};
 
       const extractFields = (obj: any, prefix = '') => {
         Object.entries(obj).forEach(([key, val]) => {
           const fieldName = prefix ? `${prefix}.${key}` : key;
           let type: ResponseField['type'];
           let children: ResponseField[] | undefined;
-          const fieldMeta = metadata[fieldName] || {};
+          const fieldMeta = metadataFields[fieldName] || {};
 
           if (val === null) {
             type = 'null';
@@ -87,7 +89,7 @@ export function ResponseBuilder({ value, onChange }: ResponseBuilderProps) {
               children = [];
               Object.entries(val[0]).forEach(([childKey, childVal]) => {
                 let childType: ResponseField['type'];
-                const childMeta = metadata[`${fieldName}[].${childKey}`] || {};
+                const childMeta = metadataFields[`${fieldName}[].${childKey}`] || {};
 
                 // Restore type from metadata first (if available)
                 if (childMeta.type) {
@@ -200,11 +202,14 @@ export function ResponseBuilder({ value, onChange }: ResponseBuilderProps) {
           analysis_id: "ID that will be responded from the system",
           status: "COMPLETED",
           results: results
-        },
-        _metadata: metadata
+        }
       };
 
       onChange(JSON.stringify(finalResponse, null, 2));
+
+      if (onMetadataChange) {
+        onMetadataChange(Object.keys(metadata.fields).length > 0 ? metadata : undefined);
+      }
     } catch (error) {
       console.error('Failed to build JSON:', error);
     }
@@ -281,11 +286,11 @@ export function ResponseBuilder({ value, onChange }: ResponseBuilderProps) {
 
   useEffect(() => {
     if (value && value.trim() && value !== lastParsedValue) {
-      parseJsonToFields(value);
+      parseJsonToFields(value, metadata);
     } else if (!value && fields.length === 0) {
       buildJsonFromFields();
     }
-  }, [value]);
+  }, [value, metadata]);
 
   useEffect(() => {
     if (fields.length > 0) {

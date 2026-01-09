@@ -20,6 +20,8 @@ export function EndpointTester({ endpoint, onClose }: EndpointTesterProps) {
   const [response, setResponse] = useState<string>('');
   const [showResponse, setShowResponse] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [actualStatusCode, setActualStatusCode] = useState<number | null>(null);
 
   const handleFieldChange = (fieldName: keyof PredefinedRequestBody, value: string) => {
     setRequestData((prev) => ({
@@ -28,15 +30,35 @@ export function EndpointTester({ endpoint, onClose }: EndpointTesterProps) {
     }));
   };
 
-  const handleTest = () => {
+  const handleTest = async () => {
+    setLoading(true);
     try {
-      const parsedResponse = JSON.parse(endpoint.responseBody);
-      const formattedResponse = JSON.stringify(parsedResponse, null, 2);
+      const url = `http://localhost:3001${endpoint.path.startsWith('/') ? endpoint.path : `/${endpoint.path}`}`;
+
+      const options: RequestInit = {
+        method: endpoint.method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      };
+
+      if (endpoint.method !== 'GET') {
+        options.body = JSON.stringify(requestData);
+      }
+
+      const res = await fetch(url, options);
+      setActualStatusCode(res.status);
+
+      const data = await res.json();
+      const formattedResponse = JSON.stringify(data, null, 2);
       setResponse(formattedResponse);
       setShowResponse(true);
     } catch (error) {
-      setResponse('Error: Invalid JSON in response body');
+      setResponse(`Error: ${error instanceof Error ? error.message : 'Failed to make request'}`);
       setShowResponse(true);
+      setActualStatusCode(null);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -190,10 +212,20 @@ export function EndpointTester({ endpoint, onClose }: EndpointTesterProps) {
 
               <button
                 onClick={handleTest}
-                className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                disabled={loading}
+                className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Send size={18} />
-                Send Request
+                {loading ? (
+                  <>
+                    <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send size={18} />
+                    Send Request
+                  </>
+                )}
               </button>
             </div>
 
@@ -224,18 +256,18 @@ export function EndpointTester({ endpoint, onClose }: EndpointTesterProps) {
                 <div className="bg-gray-900 rounded-lg p-4 overflow-x-auto">
                   <div className="flex items-center gap-2 mb-3">
                     <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                      endpoint.statusCode >= 200 && endpoint.statusCode < 300
+                      (actualStatusCode || endpoint.statusCode) >= 200 && (actualStatusCode || endpoint.statusCode) < 300
                         ? 'bg-green-500 text-white'
-                        : endpoint.statusCode >= 400
+                        : (actualStatusCode || endpoint.statusCode) >= 400
                         ? 'bg-red-500 text-white'
                         : 'bg-yellow-500 text-white'
                     }`}>
-                      {endpoint.statusCode}
+                      {actualStatusCode || endpoint.statusCode}
                     </span>
                     <span className="text-xs text-gray-400">
-                      {endpoint.statusCode >= 200 && endpoint.statusCode < 300
+                      {(actualStatusCode || endpoint.statusCode) >= 200 && (actualStatusCode || endpoint.statusCode) < 300
                         ? 'Success'
-                        : endpoint.statusCode >= 400
+                        : (actualStatusCode || endpoint.statusCode) >= 400
                         ? 'Error'
                         : 'Redirect'}
                     </span>

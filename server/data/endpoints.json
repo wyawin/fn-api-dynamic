@@ -5,7 +5,84 @@
     "path": "/nib",
     "description": "NIB (Nomor Induk Berusaha) or (Business Identification Number) is the official identity of a business actor issued through the Online Single Submission (OSS) system, functioning as the basic legality of the business, replacing SIUP/TDP/API, as well as a gateway to obtain further business permits in Indonesia.",
     "statusCode": 200,
-    "responseBody": "{\n  \"data\": {\n    \"analysis_id\": \"ID that will be responded from the system\",\n    \"status\": \"COMPLETED\",\n    \"results\": {\n      \"business_name\": \"example string\",\n      \"registration_number\": \"example string\",\n      \"business_type\": \"PT\",\n      \"registration_date\": \"2026-01-08\",\n      \"business_scale\": \"example string\",\n      \"business_address\": \"example string\",\n      \"city_regency\": \"example string\",\n      \"province\": \"example string\",\n      \"postal_code\": \"example string\",\n      \"issuing_authority\": \"example string\",\n      \"email\": \"example string\",\n      \"business_activities\": [\n        {\n          \"kbli_code\": 0,\n          \"activity_description\": \"example string\",\n          \"activity_business_address\": \"example string\",\n          \"risk_level\": \"example string\"\n        }\n      ]\n    }\n  },\n  \"_metadata\": {\n    \"fields\": {\n      \"business_name\": {\n        \"type\": \"string\",\n        \"description\": \"Legal business name or company name\"\n      },\n      \"registration_number\": {\n        \"type\": \"string\",\n        \"description\": \"Business registration number or company ID\"\n      },\n      \"business_type\": {\n        \"type\": \"multiple_choice\",\n        \"description\": \"Type of business entity (PT, CV, UD, Individual, etc.)\",\n        \"choices\": [\n          \"PT\",\n          \"CV\",\n          \"UD\",\n          \"Yayasan\",\n          \"Perkumpulan\",\n          \"Firma\",\n          \"Individual\"\n        ]\n      },\n      \"registration_date\": {\n        \"type\": \"date\",\n        \"description\": \"Date of business registration\"\n      },\n      \"business_scale\": {\n        \"type\": \"string\",\n        \"description\": \"Business scale\"\n      },\n      \"business_address\": {\n        \"type\": \"string\",\n        \"description\": \"Complete business address\"\n      },\n      \"city_regency\": {\n        \"type\": \"string\",\n        \"description\": \"City or regency location\"\n      },\n      \"province\": {\n        \"type\": \"string\",\n        \"description\": \"Province name\"\n      },\n      \"postal_code\": {\n        \"type\": \"string\",\n        \"description\": \"Postal code\"\n      },\n      \"issuing_authority\": {\n        \"type\": \"string\",\n        \"description\": \"Government office that issued the registration\"\n      },\n      \"email\": {\n        \"type\": \"string\",\n        \"description\": \"Email\"\n      },\n      \"business_activities\": {\n        \"type\": \"array_of_objects\",\n        \"description\": \"List of business activities or KBLI codes\"\n      },\n      \"business_activities[].kbli_code\": {\n        \"type\": \"number\",\n        \"description\": \"KBLI classification code\"\n      },\n      \"business_activities[].activity_description\": {\n        \"type\": \"string\",\n        \"description\": \"Description of business activity\"\n      },\n      \"business_activities[].activity_business_address\": {\n        \"type\": \"string\",\n        \"description\": \"Description of business activity address\"\n      },\n      \"business_activities[].risk_level\": {\n        \"type\": \"string\",\n        \"description\": \"Risk level\"\n      }\n    }\n  }\n}",
+    "responseBody": "{\n  \"data\": {\n    \"analysis_id\": \"ID that will be responded from the system\",\n    \"status\": \"COMPLETED\",\n    \"results\": {\n      \"business_name\": \"example string\",\n      \"registration_number\": \"example string\",\n      \"business_type\": \"PT\",\n      \"registration_date\": \"2026-01-09\",\n      \"business_scale\": \"example string\",\n      \"business_address\": \"example string\",\n      \"city_regency\": \"example string\",\n      \"province\": \"example string\",\n      \"postal_code\": \"example string\",\n      \"issuing_authority\": \"example string\",\n      \"email\": \"example string\",\n      \"business_activities\": [\n        {\n          \"kbli_code\": \"example string\",\n          \"activity_description\": \"example string\",\n          \"activity_business_address\": \"example string\",\n          \"risk_level\": \"example string\"\n        }\n      ]\n    }\n  }\n}",
+    "metadata": {
+      "fields": {
+        "business_name": {
+          "type": "string",
+          "description": "Legal business name or company name"
+        },
+        "registration_number": {
+          "type": "string",
+          "description": "Business registration number or company ID"
+        },
+        "business_type": {
+          "type": "multiple_choice",
+          "description": "Type of business entity (PT, CV, UD, Individual, etc.)",
+          "choices": [
+            "PT",
+            "CV",
+            "UD",
+            "Yayasan",
+            "Perkumpulan",
+            "Firma",
+            "Individual"
+          ]
+        },
+        "registration_date": {
+          "type": "date",
+          "description": "Date of business registration"
+        },
+        "business_scale": {
+          "type": "string",
+          "description": "Business scale"
+        },
+        "business_address": {
+          "type": "string",
+          "description": "Complete business address"
+        },
+        "city_regency": {
+          "type": "string",
+          "description": "City or regency location"
+        },
+        "province": {
+          "type": "string",
+          "description": "Province name"
+        },
+        "postal_code": {
+          "type": "string",
+          "description": "Postal code"
+        },
+        "issuing_authority": {
+          "type": "string",
+          "description": "Government office that issued the registration"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email"
+        },
+        "business_activities": {
+          "type": "array_of_objects",
+          "description": "List of business activities or KBLI codes"
+        },
+        "business_activities[].kbli_code": {
+          "type": "string",
+          "description": "KBLI classification code"
+        },
+        "business_activities[].activity_description": {
+          "type": "string",
+          "description": "Description of business activity"
+        },
+        "business_activities[].activity_business_address": {
+          "type": "string",
+          "description": "Description of business activity address"
+        },
+        "business_activities[].risk_level": {
+          "type": "string",
+          "description": "Risk level"
+        }
+      }
+    },
     "id": "e29ac092-7b3c-4cda-868b-bc0e92b43470",
     "createdAt": "2026-01-08T02:28:07.649Z"
   },
@@ -15,7 +92,61 @@
     "path": "/passport",
     "description": "A passport is an official, government-issued booklet that certifies a person's identity and nationality, allowing them to travel internationally, enter foreign countries, and return to their home country.",
     "statusCode": 200,
-    "responseBody": "{\n  \"data\": {\n    \"analysis_id\": \"ID that will be responded from the system\",\n    \"status\": \"COMPLETED\",\n    \"results\": {\n      \"full_name\": \"example string\",\n      \"passport_number\": \"example string\",\n      \"nationality\": \"example string\",\n      \"date_of_birth\": \"2026-01-08\",\n      \"gender\": \"Male\",\n      \"place_of_birth\": \"example string\",\n      \"issue_date\": \"2026-01-08\",\n      \"expiry_date\": \"2026-01-08\",\n      \"issuing_authority\": \"example string\",\n      \"passport_type\": \"diplomatic_passport\"\n    }\n  },\n  \"_metadata\": {\n    \"fields\": {\n      \"full_name\": {\n        \"type\": \"string\",\n        \"description\": \"Full Name\"\n      },\n      \"passport_number\": {\n        \"type\": \"string\",\n        \"description\": \"Passport Number\"\n      },\n      \"nationality\": {\n        \"type\": \"string\",\n        \"description\": \"Nationality\"\n      },\n      \"date_of_birth\": {\n        \"type\": \"date\",\n        \"description\": \"Date of Birth\"\n      },\n      \"gender\": {\n        \"type\": \"multiple_choice\",\n        \"description\": \"Gender\",\n        \"choices\": [\n          \"Male\",\n          \"Female\"\n        ]\n      },\n      \"place_of_birth\": {\n        \"type\": \"string\",\n        \"description\": \"Place of Birth\"\n      },\n      \"issue_date\": {\n        \"type\": \"date\",\n        \"description\": \"Passport issue date\"\n      },\n      \"expiry_date\": {\n        \"type\": \"date\",\n        \"description\": \"Passport expiry date\"\n      },\n      \"issuing_authority\": {\n        \"type\": \"string\",\n        \"description\": \"Passport issuing authority\"\n      },\n      \"passport_type\": {\n        \"type\": \"multiple_choice\",\n        \"description\": \"Passport type\",\n        \"choices\": [\n          \"diplomatic_passport\",\n          \"ordinary_passport\",\n          \"service_passport\",\n          \"emergency_passport\"\n        ]\n      }\n    }\n  }\n}",
+    "responseBody": "{\n  \"data\": {\n    \"analysis_id\": \"ID that will be responded from the system\",\n    \"status\": \"COMPLETED\",\n    \"results\": {\n      \"full_name\": \"example string\",\n      \"passport_number\": \"example string\",\n      \"nationality\": \"example string\",\n      \"date_of_birth\": \"2026-01-09\",\n      \"gender\": \"Male\",\n      \"place_of_birth\": \"example string\",\n      \"issue_date\": \"2026-01-09\",\n      \"expiry_date\": \"2026-01-09\",\n      \"issuing_authority\": \"example string\",\n      \"passport_type\": \"diplomatic_passport\"\n    }\n  }\n}",
+    "metadata": {
+      "fields": {
+        "full_name": {
+          "type": "string",
+          "description": "Full Name"
+        },
+        "passport_number": {
+          "type": "string",
+          "description": "Passport Number"
+        },
+        "nationality": {
+          "type": "string",
+          "description": "Nationality"
+        },
+        "date_of_birth": {
+          "type": "date",
+          "description": "Date of Birth"
+        },
+        "gender": {
+          "type": "multiple_choice",
+          "description": "Gender",
+          "choices": [
+            "Male",
+            "Female"
+          ]
+        },
+        "place_of_birth": {
+          "type": "string",
+          "description": "Place of Birth"
+        },
+        "issue_date": {
+          "type": "date",
+          "description": "Passport issue date"
+        },
+        "expiry_date": {
+          "type": "date",
+          "description": "Passport expiry date"
+        },
+        "issuing_authority": {
+          "type": "string",
+          "description": "Passport issuing authority"
+        },
+        "passport_type": {
+          "type": "multiple_choice",
+          "description": "Passport type",
+          "choices": [
+            "diplomatic_passport",
+            "ordinary_passport",
+            "service_passport",
+            "emergency_passport"
+          ]
+        }
+      }
+    },
     "id": "022a4f29-5c5d-4e0f-8c52-f8f7e1390e0d",
     "createdAt": "2026-01-08T02:50:36.288Z"
   },
@@ -25,7 +156,101 @@
     "path": "/identity_card",
     "description": "An identity card (KTP) is an official document, that containing personal details like name, photo, date of birth, and unique ID number, issued by a government or organization for identification, access, and services.",
     "statusCode": 200,
-    "responseBody": "{\n  \"data\": {\n    \"analysis_id\": \"ID that will be responded from the system\",\n    \"status\": \"COMPLETED\",\n    \"results\": {\n      \"ktp_issuing_province\": \"example string\",\n      \"ktp_issuing_city_regency\": \"example string\",\n      \"nik\": \"example string\",\n      \"full_name\": \"example string\",\n      \"gender\": \"Male\",\n      \"blood_type\": \"A\",\n      \"date_of_birth\": \"2026-01-08\",\n      \"place_of_birth\": \"example string\",\n      \"address\": \"example string\",\n      \"rt_rw\": \"example string\",\n      \"ward_or_village\": \"example string\",\n      \"subdistrict\": \"example string\",\n      \"religion\": \"example string\",\n      \"marital_status\": \"example string\",\n      \"job_occupation\": \"example string\",\n      \"citizenship\": \"example string\",\n      \"valid_until\": \"example string\",\n      \"issued_date\": \"2026-01-08\",\n      \"issued_city_regency\": \"example string\",\n      \"nationality\": \"example string\"\n    }\n  },\n  \"_metadata\": {\n    \"fields\": {\n      \"ktp_issuing_province\": {\n        \"type\": \"string\",\n        \"description\": \"Province that issued the KTP\"\n      },\n      \"ktp_issuing_city_regency\": {\n        \"type\": \"string\",\n        \"description\": \"City or regency that issued the KTP\"\n      },\n      \"nik\": {\n        \"type\": \"string\",\n        \"description\": \"NIK (Nomor Induk Kependudukan) - 16 digit identification number\"\n      },\n      \"full_name\": {\n        \"type\": \"string\",\n        \"description\": \"Complete full name as written on KTP\"\n      },\n      \"gender\": {\n        \"type\": \"multiple_choice\",\n        \"description\": \"Gender\",\n        \"choices\": [\n          \"Male\",\n          \"Female\"\n        ]\n      },\n      \"blood_type\": {\n        \"type\": \"multiple_choice\",\n        \"description\": \"Blood type\",\n        \"choices\": [\n          \"A\",\n          \"B\",\n          \"AB\",\n          \"O\"\n        ]\n      },\n      \"date_of_birth\": {\n        \"type\": \"date\",\n        \"description\": \"Date of birth\"\n      },\n      \"place_of_birth\": {\n        \"type\": \"string\",\n        \"description\": \"Place of birth (city/regency)\"\n      },\n      \"address\": {\n        \"type\": \"string\",\n        \"description\": \"Complete address including RT/RW\"\n      },\n      \"rt_rw\": {\n        \"type\": \"string\",\n        \"description\": \"RT and RW of address information\"\n      },\n      \"ward_or_village\": {\n        \"type\": \"string\",\n        \"description\": \"Ward or Village (Kelurahan atau desa) of address information\"\n      },\n      \"subdistrict\": {\n        \"type\": \"string\",\n        \"description\": \"Sub district (Kecamatan) of address information\"\n      },\n      \"religion\": {\n        \"type\": \"string\",\n        \"description\": \"Religion\"\n      },\n      \"marital_status\": {\n        \"type\": \"string\",\n        \"description\": \"Marital status\"\n      },\n      \"job_occupation\": {\n        \"type\": \"string\",\n        \"description\": \"Job Occupation\"\n      },\n      \"citizenship\": {\n        \"type\": \"string\",\n        \"description\": \"Citizenship\"\n      },\n      \"valid_until\": {\n        \"type\": \"string\",\n        \"description\": \"Validity expiration date\"\n      },\n      \"issued_date\": {\n        \"type\": \"date\",\n        \"description\": \"Date when identity card was issued\"\n      },\n      \"issued_city_regency\": {\n        \"type\": \"string\",\n        \"description\": \"City or regency where identity card was issued\"\n      },\n      \"nationality\": {\n        \"type\": \"string\",\n        \"description\": \"Nationality\"\n      }\n    }\n  }\n}",
+    "responseBody": "{\n  \"data\": {\n    \"analysis_id\": \"ID that will be responded from the system\",\n    \"status\": \"COMPLETED\",\n    \"results\": {\n      \"ktp_issuing_province\": \"example string\",\n      \"ktp_issuing_city_regency\": \"example string\",\n      \"nik\": \"example string\",\n      \"full_name\": \"example string\",\n      \"gender\": \"Male\",\n      \"blood_type\": \"A\",\n      \"date_of_birth\": \"2026-01-09\",\n      \"place_of_birth\": \"example string\",\n      \"address\": \"example string\",\n      \"rt_rw\": \"example string\",\n      \"ward_or_village\": \"example string\",\n      \"subdistrict\": \"example string\",\n      \"religion\": \"example string\",\n      \"marital_status\": \"example string\",\n      \"job_occupation\": \"example string\",\n      \"citizenship\": \"example string\",\n      \"valid_until\": \"example string\",\n      \"issued_date\": \"2026-01-09\",\n      \"issued_city_regency\": \"example string\",\n      \"nationality\": \"example string\"\n    }\n  }\n}",
+    "metadata": {
+      "fields": {
+        "ktp_issuing_province": {
+          "type": "string",
+          "description": "Province that issued the KTP"
+        },
+        "ktp_issuing_city_regency": {
+          "type": "string",
+          "description": "City or regency that issued the KTP"
+        },
+        "nik": {
+          "type": "string",
+          "description": "NIK (Nomor Induk Kependudukan) - 16 digit identification number"
+        },
+        "full_name": {
+          "type": "string",
+          "description": "Complete full name as written on KTP"
+        },
+        "gender": {
+          "type": "multiple_choice",
+          "description": "Gender",
+          "choices": [
+            "Male",
+            "Female"
+          ]
+        },
+        "blood_type": {
+          "type": "multiple_choice",
+          "description": "Blood type",
+          "choices": [
+            "A",
+            "B",
+            "AB",
+            "O"
+          ]
+        },
+        "date_of_birth": {
+          "type": "date",
+          "description": "Date of birth"
+        },
+        "place_of_birth": {
+          "type": "string",
+          "description": "Place of birth (city/regency)"
+        },
+        "address": {
+          "type": "string",
+          "description": "Complete address including RT/RW"
+        },
+        "rt_rw": {
+          "type": "string",
+          "description": "RT and RW of address information"
+        },
+        "ward_or_village": {
+          "type": "string",
+          "description": "Ward or Village (Kelurahan atau desa) of address information"
+        },
+        "subdistrict": {
+          "type": "string",
+          "description": "Sub district (Kecamatan) of address information"
+        },
+        "religion": {
+          "type": "string",
+          "description": "Religion"
+        },
+        "marital_status": {
+          "type": "string",
+          "description": "Marital status"
+        },
+        "job_occupation": {
+          "type": "string",
+          "description": "Job Occupation"
+        },
+        "citizenship": {
+          "type": "string",
+          "description": "Citizenship"
+        },
+        "valid_until": {
+          "type": "string",
+          "description": "Validity expiration date"
+        },
+        "issued_date": {
+          "type": "date",
+          "description": "Date when identity card was issued"
+        },
+        "issued_city_regency": {
+          "type": "string",
+          "description": "City or regency where identity card was issued"
+        },
+        "nationality": {
+          "type": "string",
+          "description": "Nationality"
+        }
+      }
+    },
     "id": "daf6b4ea-9cd1-4daf-895b-958813b0d242",
     "createdAt": "2026-01-08T03:17:09.281Z"
   }
