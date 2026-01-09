@@ -1,13 +1,13 @@
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 export interface PredefinedRequestBody {
-  remark: string;
+  remark?: string;
   description: string;
   filedata: string;
   fileurl: string;
   filename: string;
   filetype: string;
-  password: string;
+  password?: string;
 }
 
 export interface ResponseMetadata {

@@ -62,13 +62,13 @@ const endpointSchema = Joi.object({
 });
 
 const predefinedRequestBodySchema = Joi.object({
-  remark: Joi.string().allow('').max(500),
-  description: Joi.string().allow('').max(2000),
-  filedata: Joi.string().allow(''),
-  fileurl: Joi.string().uri().allow(''),
-  filename: Joi.string().allow('').max(255),
-  filetype: Joi.string().allow('').max(50),
-  password: Joi.string().allow('').max(100),
+  remark: Joi.string().allow('').optional(),
+  description: Joi.string().required(),
+  filedata: Joi.string().required(),
+  fileurl: Joi.string().required(),
+  filename: Joi.string().required(),
+  filetype: Joi.string().required().max(10),
+  password: Joi.string().allow('').optional(),
 });
 
 let dynamicRouter = Router();
