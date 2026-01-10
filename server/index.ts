@@ -156,6 +156,7 @@ const loadDynamicRoutes = async () => {
             document: documentData,
             expectedSchema: customFields,
             metadata: endpoint.metadata?.fields,
+            documentType: endpoint.description,
           });
 
           const processingTime = Date.now() - startTime;

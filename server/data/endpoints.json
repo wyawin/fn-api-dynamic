@@ -253,5 +253,217 @@
     },
     "id": "daf6b4ea-9cd1-4daf-895b-958813b0d242",
     "createdAt": "2026-01-08T03:17:09.281Z"
+  },
+  {
+    "name": "Extract Deed of Incorporation",
+    "method": "POST",
+    "path": "/deed_of_incorporation",
+    "description": "A Deed of Incorporation or Akta Pendirian is the foundational legal document, prepared by a notary, that officially establishes a company (like a PT, CV, UD, etc in Indonesia) and serves as its constitution, detailing its name, objectives, capital, management structure, and the internal rules for operations, governance, and shareholder rights.",
+    "statusCode": 200,
+    "responseBody": "{\n  \"deed_number\": \"example string\",\n  \"deed_date\": \"2026-01-10\",\n  \"notary_name\": \"example string\",\n  \"notary_domicile\": \"example string\",\n  \"witness\": [\n    {\n      \"witness_name\": \"example string\",\n      \"witness_place_of_birth\": \"example string\",\n      \"witness_date_of_birth\": \"2026-01-10\",\n      \"witness_address\": \"example string\",\n      \"witness_identity_card_number\": \"example string\",\n      \"witness_identity_card_type\": \"KTP\"\n    }\n  ],\n  \"power_of_attorney_name\": \"example string\",\n  \"power_of_attorney_place_of_birth\": \"example string\",\n  \"power_of_attorney_date_of_birth\": \"2026-01-10\",\n  \"power_of_attorney_address\": \"example string\",\n  \"power_of_attorney_identity_card_number\": \"example string\",\n  \"power_of_attorney_identity_card_type\": \"KTP\",\n  \"legal_company_name\": \"example string\",\n  \"legal_form\": \"PT\",\n  \"legal_company_domicile\": \"example string\",\n  \"business_activities\": [\n    {\n      \"kbli_code\": \"example string\",\n      \"activity_description\": \"example string\"\n    }\n  ],\n  \"authorized_capital\": 0,\n  \"issued_capital\": 0,\n  \"paid_up_capital\": 0,\n  \"list_shareholders\": [\n    {\n      \"identity_card_number\": \"example string\",\n      \"identity_card_type\": \"KTP\",\n      \"number_of_shares\": 0,\n      \"share_class\": \"example string\",\n      \"total_amount_of_number_of_shares\": 0,\n      \"shareholder_address\": \"example string\",\n      \"shareholder_place_of_birth\": \"example string\",\n      \"shareholder_date_of_birth\": \"2026-01-10\"\n    }\n  ],\n  \"list_management\": [\n    {\n      \"identity_card_number\": \"example string\",\n      \"identity_card_type\": \"KTP\",\n      \"role\": \"example string\",\n      \"management_address\": \"example string\",\n      \"management_place_of_birth\": \"example string\",\n      \"management_date_of_birth\": \"2026-01-10\"\n    }\n  ]\n}",
+    "metadata": {
+      "fields": {
+        "deed_number": {
+          "type": "string",
+          "description": "Deed of incorporation number"
+        },
+        "deed_date": {
+          "type": "date",
+          "description": "Deed of incorporation date"
+        },
+        "notary_name": {
+          "type": "string",
+          "description": "Name of the notary issuing the deed (including the title)"
+        },
+        "notary_domicile": {
+          "type": "string",
+          "description": "Domicile of the notary issuing the deed"
+        },
+        "witness": {
+          "type": "array_of_objects",
+          "description": "Witness of the notary issuing the deed",
+          "choices": [
+            "option1",
+            "option2"
+          ]
+        },
+        "witness[].witness_name": {
+          "type": "string",
+          "description": "Witness name"
+        },
+        "witness[].witness_place_of_birth": {
+          "type": "string",
+          "description": "Witness place of birth"
+        },
+        "witness[].witness_date_of_birth": {
+          "type": "date",
+          "description": "Witness date of birth"
+        },
+        "witness[].witness_address": {
+          "type": "string",
+          "description": "Witness address"
+        },
+        "witness[].witness_identity_card_number": {
+          "type": "string",
+          "description": "Witness identity card number (KTP, Passport, etc)"
+        },
+        "witness[].witness_identity_card_type": {
+          "type": "multiple_choice",
+          "description": "Witness identity card type",
+          "choices": [
+            "KTP",
+            "Passport"
+          ]
+        },
+        "power_of_attorney_name": {
+          "type": "string",
+          "description": "Power of attorney name"
+        },
+        "power_of_attorney_place_of_birth": {
+          "type": "string",
+          "description": "Power of attorney place of birth"
+        },
+        "power_of_attorney_date_of_birth": {
+          "type": "date",
+          "description": "Power of attorney date of birth"
+        },
+        "power_of_attorney_address": {
+          "type": "string",
+          "description": "Power of attorney address"
+        },
+        "power_of_attorney_identity_card_number": {
+          "type": "string",
+          "description": "Power of attorney identity card number"
+        },
+        "power_of_attorney_identity_card_type": {
+          "type": "multiple_choice",
+          "description": "Power of attorney identity card type",
+          "choices": [
+            "KTP",
+            "Passport"
+          ]
+        },
+        "legal_company_name": {
+          "type": "string",
+          "description": "Official registered company name as stated in the deed"
+        },
+        "legal_form": {
+          "type": "multiple_choice",
+          "description": "Type of legal entity",
+          "choices": [
+            "PT",
+            "CV",
+            "UD",
+            "Yayasan",
+            "Perkumpulan",
+            "Firma",
+            "Individual"
+          ]
+        },
+        "legal_company_domicile": {
+          "type": "string",
+          "description": "Official registered domicile as stated in the deed"
+        },
+        "business_activities": {
+          "type": "array_of_objects",
+          "description": "List of business activities or KBLI codes"
+        },
+        "business_activities[].kbli_code": {
+          "type": "string",
+          "description": "KBLI classification code"
+        },
+        "business_activities[].activity_description": {
+          "type": "string",
+          "description": "Description of business activity"
+        },
+        "authorized_capital": {
+          "type": "number",
+          "description": "Maximum capital allowed by deed"
+        },
+        "issued_capital": {
+          "type": "number",
+          "description": "Capital committed by shareholders"
+        },
+        "paid_up_capital": {
+          "type": "number",
+          "description": "Capital actually paid in cash/assets"
+        },
+        "list_shareholders": {
+          "type": "array_of_objects",
+          "description": "List of shareholders in the deed"
+        },
+        "list_shareholders[].identity_card_number": {
+          "type": "string",
+          "description": "Shareholder identity card number"
+        },
+        "list_shareholders[].identity_card_type": {
+          "type": "multiple_choice",
+          "description": "Shareholder identity card type",
+          "choices": [
+            "KTP",
+            "NPWP",
+            "Passport"
+          ]
+        },
+        "list_shareholders[].number_of_shares": {
+          "type": "number",
+          "description": "Shareholder number of shares"
+        },
+        "list_shareholders[].share_class": {
+          "type": "string",
+          "description": "Shareholder class classification"
+        },
+        "list_shareholders[].total_amount_of_number_of_shares": {
+          "type": "number",
+          "description": "Total amount of number of shares"
+        },
+        "list_shareholders[].shareholder_address": {
+          "type": "string",
+          "description": "Shareholder address"
+        },
+        "list_shareholders[].shareholder_place_of_birth": {
+          "type": "string",
+          "description": "Shareholder place of birth"
+        },
+        "list_shareholders[].shareholder_date_of_birth": {
+          "type": "date",
+          "description": "Shareholder date of birth"
+        },
+        "list_management": {
+          "type": "array_of_objects",
+          "description": "List of management stated in the deed"
+        },
+        "list_management[].identity_card_number": {
+          "type": "string",
+          "description": "Management identity card number"
+        },
+        "list_management[].identity_card_type": {
+          "type": "multiple_choice",
+          "description": "Management identity card type",
+          "choices": [
+            "KTP",
+            "Passport"
+          ]
+        },
+        "list_management[].role": {
+          "type": "string",
+          "description": "Management role stated in the deed"
+        },
+        "list_management[].management_address": {
+          "type": "string",
+          "description": "Management address"
+        },
+        "list_management[].management_place_of_birth": {
+          "type": "string",
+          "description": "Management place of birth"
+        },
+        "list_management[].management_date_of_birth": {
+          "type": "date",
+          "description": "Management date of birth"
+        }
+      }
+    },
+    "id": "26822d73-4032-4f1e-b36d-b5ccd573cde1",
+    "createdAt": "2026-01-10T15:00:53.469Z"
   }
 ]

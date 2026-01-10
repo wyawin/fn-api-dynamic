@@ -20,6 +20,7 @@ interface ExtractionRequest {
   document: DocumentData;
   expectedSchema: any;
   metadata?: Record<string, any>;
+  documentType?: string;
 }
 
 export class LLMService {
@@ -40,21 +41,22 @@ export class LLMService {
   }
 
   async extractDocumentData(request: ExtractionRequest): Promise<any> {
-    const { document, expectedSchema, metadata } = request;
+    const { document, expectedSchema, metadata, documentType } = request;
 
     if (this.pdfProcessor.isPDF(document.filetype)) {
-      return await this.extractFromPDF(document, expectedSchema, metadata);
+      return await this.extractFromPDF(document, expectedSchema, metadata, documentType);
     } else {
-      return await this.extractFromImage(document, expectedSchema, metadata);
+      return await this.extractFromImage(document, expectedSchema, metadata, documentType);
     }
   }
 
   private async extractFromImage(
     document: DocumentData,
     expectedSchema: any,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
+    documentType?: string
   ): Promise<any> {
-    const prompt = this.buildExtractionPrompt(document, expectedSchema, metadata);
+    const prompt = this.buildExtractionPrompt(document, expectedSchema, metadata, documentType);
 
     try {
       const response = await this.callLLM(prompt, document.filedata ? [document.filedata] : undefined);
@@ -76,7 +78,8 @@ export class LLMService {
   private async extractFromPDF(
     document: DocumentData,
     expectedSchema: any,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
+    documentType?: string
   ): Promise<any> {
     try {
       console.log(`Processing PDF: ${document.filename}`);
@@ -84,7 +87,7 @@ export class LLMService {
       const pages = await this.pdfProcessor.convertPDFToImages(document.filedata);
       console.log(`PDF converted to ${pages.length} page(s)`);
 
-      const pageResults = await this.processAllPages(pages, document, expectedSchema, metadata);
+      const pageResults = await this.processAllPages(pages, document, expectedSchema, metadata, documentType);
 
       return this.combinePageResults(pageResults, expectedSchema);
     } catch (error) {
@@ -97,7 +100,8 @@ export class LLMService {
     pages: PDFPage[],
     document: DocumentData,
     expectedSchema: any,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
+    documentType?: string
   ): Promise<any[]> {
     const pageResults: any[] = [];
     const previousPagesContext: string[] = [];
@@ -109,7 +113,8 @@ export class LLMService {
         document,
         expectedSchema,
         metadata,
-        previousPagesContext
+        previousPagesContext,
+        documentType
       );
 
       pageResults.push(pageResult);
@@ -130,7 +135,8 @@ export class LLMService {
     document: DocumentData,
     expectedSchema: any,
     metadata: Record<string, any> | undefined,
-    previousPagesContext: string[]
+    previousPagesContext: string[],
+    documentType?: string
   ): Promise<any> {
     console.log(`Processing page ${page.pageNumber}/${totalPages}`);
 
@@ -143,7 +149,7 @@ export class LLMService {
       description: `${document.description}\n\nThis is page ${page.pageNumber} of ${totalPages} in the PDF document.${contextInfo}`,
     };
 
-    const prompt = this.buildExtractionPrompt(enhancedDocument, expectedSchema, metadata);
+    const prompt = this.buildExtractionPrompt(enhancedDocument, expectedSchema, metadata, documentType);
 
     try {
       const llmResponse = await this.callLLM(prompt, [page.imageBase64]);
@@ -231,50 +237,89 @@ export class LLMService {
   private buildExtractionPrompt(
     document: DocumentData,
     expectedSchema: any,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
+    documentType?: string
   ): string {
-    let prompt = `You are a document extraction assistant. Extract information from the provided document according to the specified schema.
+    let prompt = `You are a document extraction assistant. Extract information from the provided document according to the specified schema.`;
 
-Document Information:
-- Filename: ${document.filename}
-- File Type: ${document.filetype}
-- Description: ${document.description}`;
-
-    if (document.remark) {
-      prompt += `\n- Additional Notes: ${document.remark}`;
+    if (documentType) {
+      prompt += `\n\nDocument Type: ${documentType}`;
     }
 
-    if (document.fileurl) {
-      prompt += `\n- File URL: ${document.fileurl}`;
-    }
-
-    prompt += `\n\nExpected Output Schema:
-${JSON.stringify(expectedSchema, null, 2)}`;
-
+    // Build enhanced schema with descriptions as values
+    const enhancedSchema: any = {};
     if (metadata && Object.keys(metadata).length > 0) {
-      prompt += `\n\nField Metadata (for validation and formatting):`;
+      for (const [fieldName, value] of Object.entries(expectedSchema)) {
+        const fieldMeta = metadata[fieldName] as any;
 
-      for (const [fieldName, fieldMeta] of Object.entries(metadata)) {
-        const meta = fieldMeta as any;
-        prompt += `\n- ${fieldName}:`;
+        // Check if this is an array_of_objects field
+        if (fieldMeta?.type === 'array_of_objects' && Array.isArray(value) && value.length > 0) {
+          // Build the object schema from child metadata
+          const objectSchema: any = {};
+          const childPrefix = `${fieldName}[].`;
 
-        if (meta.type) {
-          prompt += ` Type: ${meta.type}`;
-        }
+          // Find all child field metadata
+          for (const [metaKey, metaValue] of Object.entries(metadata)) {
+            if (metaKey.startsWith(childPrefix)) {
+              const childName = metaKey.substring(childPrefix.length);
+              const childMeta = metaValue as any;
+              let childDescription = childMeta?.description || childName;
 
-        if (meta.description) {
-          prompt += ` | Description: ${meta.description}`;
-        }
+              // Add format specifications for child fields
+              if (childMeta?.type) {
+                const type = childMeta.type.toLowerCase();
 
-        if (meta.choices && Array.isArray(meta.choices)) {
-          prompt += ` | Must be one of: ${meta.choices.join(', ')}`;
-        }
+                if (type === 'multiple_choice' && childMeta.choices && Array.isArray(childMeta.choices)) {
+                  childDescription = `${childDescription} (return in one of the options: ${childMeta.choices.join(', ')})`;
+                } else if (type === 'date') {
+                  childDescription = `${childDescription} (return in format YYYY-MM-DD)`;
+                } else if (type === 'datetime') {
+                  childDescription = `${childDescription} (return in format YYYY-MM-DD HH:MM:SS)`;
+                } else if (type === 'time') {
+                  childDescription = `${childDescription} (return in format HH:MM:SS)`;
+                } else if (type === 'boolean') {
+                  childDescription = `${childDescription} (Return in Boolean)`;
+                }
+              }
 
-        if (typeof meta.decimalPlaces === 'number') {
-          prompt += ` | Decimal places: ${meta.decimalPlaces}`;
+              objectSchema[childName] = childDescription;
+            }
+          }
+
+          // Use the built schema or fall back to the original value
+          enhancedSchema[fieldName] = Object.keys(objectSchema).length > 0 ? [objectSchema] : value;
+        } else {
+          // Handle non-array_of_objects fields
+          let description = fieldMeta?.description || value;
+
+          // Add format specifications based on field type
+          if (fieldMeta?.type) {
+            const type = fieldMeta.type.toLowerCase();
+
+            if (type === 'multiple_choice' && fieldMeta.choices && Array.isArray(fieldMeta.choices)) {
+              description = `${description} (return in one of the options: ${fieldMeta.choices.join(', ')})`;
+            } else if (type === 'date') {
+              description = `${description} (return in format YYYY-MM-DD)`;
+            } else if (type === 'datetime') {
+              description = `${description} (return in format YYYY-MM-DD HH:MM:SS)`;
+            } else if (type === 'time') {
+              description = `${description} (return in format HH:MM:SS)`;
+            } else if (type === 'boolean') {
+              description = `${description} (Return in Boolean)`;
+            } else if (type === 'array') {
+              description = `${description} (Return in array of value)`;
+            }
+          }
+
+          enhancedSchema[fieldName] = description;
         }
       }
+    } else {
+      Object.assign(enhancedSchema, expectedSchema);
     }
+
+    prompt += `\n\nExpected Output Schema (field values show what to extract):
+${JSON.stringify(enhancedSchema, null, 2)}`;
 
     prompt += `\n\nInstructions:
 1. Carefully analyze the document image/content
