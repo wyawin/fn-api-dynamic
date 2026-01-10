@@ -85,7 +85,7 @@ export class LLMService {
       console.log(`PDF converted to ${pages.length} page(s)`);
 
       const pageResults = await this.processAllPages(pages, document, expectedSchema, metadata);
-      console.log('combining')
+
       return this.combinePageResults(pageResults, expectedSchema);
     } catch (error) {
       console.error('PDF extraction error:', error);
@@ -173,13 +173,16 @@ export class LLMService {
     });
 
     const result = response.data;
-    console.log(result)
 
-    if (!result.response) {
-      throw new Error('No response from LLM');
+    // Some models (like qwen2.5-vl:7b) may return data in 'thinking' field
+    const llmResponse = result.thinking || result.response;
+
+    if (!llmResponse) {
+      console.error('LLM response structure:', JSON.stringify(result, null, 2));
+      throw new Error('No response or thinking field found in LLM output');
     }
 
-    return result.response;
+    return llmResponse;
   }
 
   private combinePageResults(pageResults: any[], expectedSchema: any): any {

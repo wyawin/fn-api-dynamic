@@ -156,110 +156,131 @@ export const generateApiDocumentationPDF = async (endpoints: Endpoint[]) => {
     yPosition = (doc as any).lastAutoTable.finalY + 8;
 
     // Response Body
-    if (endpoint.responseBody && endpoint.responseBody.trim() !== '{}') {
-      if (yPosition > 240) {
-        doc.addPage();
-        yPosition = 20;
+    if (yPosition > 240) {
+      doc.addPage();
+      yPosition = 20;
+    }
+
+    doc.setFontSize(12);
+    doc.setTextColor(7, 43, 164);
+    doc.text('Response Body:', margin, yPosition);
+    yPosition += 6;
+
+    try {
+      let responseJson;
+      if (endpoint.responseBody && endpoint.responseBody.trim() !== '' && endpoint.responseBody.trim() !== '{}') {
+        responseJson = JSON.parse(endpoint.responseBody);
+      } else {
+        responseJson = {};
       }
 
-      doc.setFontSize(12);
-      doc.setTextColor(7, 43, 164);
-      doc.text('Response Body:', margin, yPosition);
+      // Show the complete response structure with actual data
+      doc.setFontSize(9);
+      doc.setTextColor(71, 85, 105);
+      doc.text('Response Structure:', margin, yPosition);
+      yPosition += 5;
+
+      // Build the complete response structure (remove _metadata if it exists in the JSON)
+      const { _metadata, ...resultsData } = responseJson;
+      const completeResponse = {
+        data: {
+          analysis_id: "550e8400-e29b-41d4-a716-446655440000",
+          status: "completed",
+          results: Object.keys(resultsData).length > 0 ? resultsData : { /* custom fields will appear here */ },
+          processing_time_ms: 1234
+        }
+      };
+
+      const responseExample = JSON.stringify(completeResponse, null, 2);
+      const exampleLines = doc.splitTextToSize(responseExample, pageWidth - 2 * margin - 8);
+
+      doc.setFont('courier');
+      doc.setFontSize(8);
+      doc.setTextColor(51, 65, 85);
+
+      const maxLinesPerPage = 35;
+      let currentLine = 0;
+
+      while (currentLine < exampleLines.length) {
+        if (yPosition > 260) {
+          doc.addPage();
+          yPosition = 20;
+        }
+
+        const remainingLines = Math.min(maxLinesPerPage, exampleLines.length - currentLine);
+        const linesToDisplay = exampleLines.slice(currentLine, currentLine + remainingLines);
+
+        // Draw code block background
+        const blockHeight = linesToDisplay.length * 3.5 + 4;
+        doc.setFillColor(248, 250, 252);
+        doc.setDrawColor(226, 232, 240);
+        doc.rect(margin, yPosition - 2, pageWidth - 2 * margin, blockHeight, 'FD');
+
+        // Add text inside code block
+        doc.text(linesToDisplay, margin + 4, yPosition + 2);
+        yPosition += blockHeight + 2;
+        currentLine += remainingLines;
+
+        if (currentLine < exampleLines.length) {
+          doc.addPage();
+          yPosition = 20;
+        }
+      }
+
+      // Reset font to normal
+      doc.setFont('helvetica');
       yPosition += 6;
 
-      try {
-        const responseJson = JSON.parse(endpoint.responseBody);
+      // Extract fields from results with descriptions - use endpoint.metadata instead of responseJson._metadata
+      const resultsObj = resultsData;
+      const metadata = endpoint.metadata?.fields || {};
+      const responseFields = extractFieldsWithDescriptionFromResults(resultsObj, metadata);
 
-        // Show the complete response example with actual data
+      if (responseFields.length > 0) {
+        if (yPosition > 240) {
+          doc.addPage();
+          yPosition = 20;
+        }
+
         doc.setFontSize(9);
         doc.setTextColor(71, 85, 105);
-        doc.text('Response Example:', margin, yPosition);
+        doc.text('Custom Results Fields:', margin, yPosition);
         yPosition += 5;
 
-        // Remove _metadata from display (it's only used internally for field descriptions)
-        const { _metadata, ...displayJson } = responseJson;
-        const responseExample = JSON.stringify(displayJson, null, 2);
-        const exampleLines = doc.splitTextToSize(responseExample, pageWidth - 2 * margin - 8);
-
-        doc.setFont('courier');
-        doc.setFontSize(8);
-        doc.setTextColor(51, 65, 85);
-
-        const maxLinesPerPage = 35;
-        let currentLine = 0;
-
-        while (currentLine < exampleLines.length) {
-          if (yPosition > 260) {
-            doc.addPage();
-            yPosition = 20;
+        autoTable(doc, {
+          startY: yPosition,
+          head: [['Field', 'Type', 'Description']],
+          body: responseFields,
+          theme: 'striped',
+          headStyles: { fillColor: [250, 216, 90], textColor: [7, 43, 164], fontSize: 10 },
+          styles: { fontSize: 9, cellPadding: 3 },
+          margin: { left: margin },
+          tableWidth: pageWidth - 2 * margin,
+          columnStyles: {
+            0: { cellWidth: 50 },
+            1: { cellWidth: 30 },
+            2: { cellWidth: 'auto' }
           }
-
-          const remainingLines = Math.min(maxLinesPerPage, exampleLines.length - currentLine);
-          const linesToDisplay = exampleLines.slice(currentLine, currentLine + remainingLines);
-
-          // Draw code block background
-          const blockHeight = linesToDisplay.length * 3.5 + 4;
-          doc.setFillColor(248, 250, 252);
-          doc.setDrawColor(226, 232, 240);
-          doc.rect(margin, yPosition - 2, pageWidth - 2 * margin, blockHeight, 'FD');
-
-          // Add text inside code block
-          doc.text(linesToDisplay, margin + 4, yPosition + 2);
-          yPosition += blockHeight + 2;
-          currentLine += remainingLines;
-
-          if (currentLine < exampleLines.length) {
-            doc.addPage();
-            yPosition = 20;
-          }
-        }
-
-        // Reset font to normal
-        doc.setFont('helvetica');
-        yPosition += 6;
-
-        // Extract fields from results with descriptions
-        const resultsObj = responseJson?.data?.results || {};
-        const metadata = responseJson?._metadata?.fields || {};
-        const responseFields = extractFieldsWithDescriptionFromResults(resultsObj, metadata);
-
-        if (responseFields.length > 0) {
-          if (yPosition > 240) {
-            doc.addPage();
-            yPosition = 20;
-          }
-
-          doc.setFontSize(9);
-          doc.setTextColor(71, 85, 105);
-          doc.text('Results Fields Reference:', margin, yPosition);
-          yPosition += 5;
-
-          autoTable(doc, {
-            startY: yPosition,
-            head: [['Field', 'Type', 'Description']],
-            body: responseFields,
-            theme: 'striped',
-            headStyles: { fillColor: [250, 216, 90], textColor: [7, 43, 164], fontSize: 10 },
-            styles: { fontSize: 9, cellPadding: 3 },
-            margin: { left: margin },
-            tableWidth: pageWidth - 2 * margin,
-            columnStyles: {
-              0: { cellWidth: 50 },
-              1: { cellWidth: 30 },
-              2: { cellWidth: 'auto' }
-            }
-          });
-          yPosition = (doc as any).lastAutoTable.finalY + 12;
-        }
-      } catch (e) {
+        });
+        yPosition = (doc as any).lastAutoTable.finalY + 12;
+      } else {
+        // Show a note if no custom fields are defined
         doc.setFontSize(9);
         doc.setTextColor(100, 116, 139);
+        doc.text('Note: No custom result fields have been defined for this endpoint.', margin, yPosition);
+        yPosition += 12;
+      }
+    } catch (e) {
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      if (endpoint.responseBody && endpoint.responseBody.trim()) {
         const jsonLines = doc.splitTextToSize(endpoint.responseBody, pageWidth - 2 * margin - 4);
         doc.text(jsonLines, margin + 2, yPosition);
         yPosition += jsonLines.length * 4 + 12;
+      } else {
+        doc.text('Note: No custom result fields have been defined for this endpoint.', margin, yPosition);
+        yPosition += 12;
       }
-    } else {
-      yPosition += 10;
     }
 
     // Separator line
