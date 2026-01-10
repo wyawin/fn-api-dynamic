@@ -56,3 +56,21 @@ export const endpointApi = {
     }
   },
 };
+
+export const llmApi = {
+  async checkHealth(): Promise<{ status: string }> {
+    const response = await fetch(`${API_BASE_URL}/llm/health`);
+    if (!response.ok) {
+      throw new Error('Failed to check LLM health');
+    }
+    return response.json();
+  },
+
+  async listModels(): Promise<{ models: string[] }> {
+    const response = await fetch(`${API_BASE_URL}/llm/models`);
+    if (!response.ok) {
+      throw new Error('Failed to list models');
+    }
+    return response.json();
+  },
+};

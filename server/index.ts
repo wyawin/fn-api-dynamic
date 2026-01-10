@@ -4,6 +4,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import Joi from 'joi';
+import { createLLMService } from './services/llmService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,6 +15,8 @@ const DATA_FILE = path.join(__dirname, 'data', 'endpoints.json');
 
 app.use(cors());
 app.use(express.json());
+
+const llmService = createLLMService('qwen3-vl:2b', 'http://localhost:11434');
 
 interface ResponseMetadata {
   fields: Record<string, {
@@ -110,7 +113,7 @@ const loadDynamicRoutes = async () => {
       const method = endpoint.method.toLowerCase() as 'get' | 'post' | 'put' | 'patch' | 'delete';
       const routePath = endpoint.path.startsWith('/') ? endpoint.path : `/${endpoint.path}`;
 
-      dynamicRouter[method](routePath, (req: Request, res: Response) => {
+      dynamicRouter[method](routePath, async (req: Request, res: Response) => {
         if (method !== 'get') {
           const { error } = predefinedRequestBodySchema.validate(req.body);
           if (error) {
@@ -121,8 +124,66 @@ const loadDynamicRoutes = async () => {
           }
         }
 
-        const responseData = parseResponseBody(endpoint.responseBody);
-        res.status(endpoint.statusCode).json(responseData);
+        try {
+          const customFields = parseResponseBody(endpoint.responseBody);
+
+          if (method === 'get') {
+            const response = {
+              data: {
+                analysis_id: crypto.randomUUID(),
+                status: 'completed',
+                results: customFields
+              }
+            };
+            return res.status(endpoint.statusCode).json(response);
+          }
+
+          const analysisId = crypto.randomUUID();
+          const startTime = Date.now();
+
+          const documentData = {
+            filedata: req.body.filedata,
+            fileurl: req.body.fileurl,
+            filename: req.body.filename,
+            filetype: req.body.filetype,
+            description: req.body.description,
+            remark: req.body.remark,
+            password: req.body.password,
+          };
+
+          const extractedData = await llmService.extractDocumentData({
+            document: documentData,
+            expectedSchema: customFields,
+            metadata: endpoint.metadata?.fields,
+          });
+
+          const processingTime = Date.now() - startTime;
+
+          const response = {
+            data: {
+              analysis_id: analysisId,
+              status: 'completed',
+              results: extractedData,
+              processing_time_ms: processingTime
+            }
+          };
+
+          res.status(endpoint.statusCode).json(response);
+        } catch (error) {
+          console.error(`Error processing ${endpoint.method} ${routePath}:`, error);
+
+          const errorResponse = {
+            data: {
+              analysis_id: crypto.randomUUID(),
+              status: 'failed',
+              results: null,
+              error: 'Document extraction failed',
+              message: error instanceof Error ? error.message : 'Unknown error'
+            }
+          };
+
+          res.status(500).json(errorResponse);
+        }
       });
 
       console.log(`Registered ${endpoint.method} ${routePath}`);
@@ -220,6 +281,24 @@ app.delete('/api/endpoints/:id', async (req: Request, res: Response) => {
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete endpoint' });
+  }
+});
+
+app.get('/api/llm/health', async (req: Request, res: Response) => {
+  try {
+    const isHealthy = await llmService.healthCheck();
+    res.json({ status: isHealthy ? 'healthy' : 'unavailable' });
+  } catch (error) {
+    res.status(503).json({ status: 'error', message: 'LLM service unavailable' });
+  }
+});
+
+app.get('/api/llm/models', async (req: Request, res: Response) => {
+  try {
+    const models = await llmService.listModels();
+    res.json({ models });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to list models' });
   }
 });
 

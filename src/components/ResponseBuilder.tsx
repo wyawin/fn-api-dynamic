@@ -71,7 +71,7 @@ export function ResponseBuilder({ value, onChange, metadata, onMetadataChange }:
       const parsed = JSON.parse(json);
       const extractedFields: ResponseField[] = [];
 
-      const resultsObj = parsed?.data?.results || parsed;
+      const resultsObj = parsed;
       const metadataFields = metadataObj?.fields || {};
 
       const extractFields = (obj: any, prefix = '') => {
@@ -197,15 +197,7 @@ export function ResponseBuilder({ value, onChange, metadata, onMetadataChange }:
         }
       });
 
-      const finalResponse = {
-        data: {
-          analysis_id: "ID that will be responded from the system",
-          status: "COMPLETED",
-          results: results
-        }
-      };
-
-      onChange(JSON.stringify(finalResponse, null, 2));
+      onChange(JSON.stringify(results, null, 2));
 
       if (onMetadataChange) {
         onMetadataChange(Object.keys(metadata.fields).length > 0 ? metadata : undefined);
@@ -320,13 +312,7 @@ export function ResponseBuilder({ value, onChange, metadata, onMetadataChange }:
         <div className="mb-3">
           <div className="relative">
             <textarea
-              value={value || JSON.stringify({
-                data: {
-                  analysis_id: "ID that will be responded from the system",
-                  status: "COMPLETED",
-                  results: {}
-                }
-              }, null, 2)}
+              value={value || JSON.stringify({}, null, 2)}
               readOnly
               className="w-full px-4 py-2 border border-gray-300 rounded-lg font-mono text-sm resize-none bg-gray-50 text-gray-700"
               rows={10}
@@ -336,7 +322,7 @@ export function ResponseBuilder({ value, onChange, metadata, onMetadataChange }:
             </div>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            JSON preview - use the table below to configure fields inside "results" object
+            JSON preview of your custom response fields. The API will wrap this in a standard structure with analysis_id, status, and results.
           </p>
         </div>
       )}
@@ -639,7 +625,7 @@ export function ResponseBuilder({ value, onChange, metadata, onMetadataChange }:
             </div>
           )}
           <p className="text-xs text-gray-500 mt-2">
-            Configure fields that will appear inside "results" object. Use dot notation for nested fields (e.g., "user.name"). Example values are auto-generated based on type.
+            Configure your custom response fields. Use dot notation for nested fields (e.g., "user.name"). The API will automatically wrap these in a standard response structure.
           </p>
         </div>
       </div>
