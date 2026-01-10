@@ -89,7 +89,7 @@ export class LLMService {
 
       const pageResults = await this.processAllPages(pages, document, expectedSchema, metadata, documentType);
 
-      return this.combinePageResults(pageResults, expectedSchema);
+      return await this.combinePageResults(pageResults, expectedSchema, metadata, documentType);
     } catch (error) {
       console.error('PDF extraction error:', error);
       throw new Error(`PDF extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -179,6 +179,7 @@ export class LLMService {
     });
 
     const result = response.data;
+    console.log(result)
 
     // Some models (like qwen2.5-vl:7b) may return data in 'thinking' field
     const llmResponse = result.thinking || result.response;
@@ -191,7 +192,12 @@ export class LLMService {
     return llmResponse;
   }
 
-  private combinePageResults(pageResults: any[], expectedSchema: any): any {
+  private async combinePageResults(
+    pageResults: any[],
+    expectedSchema: any,
+    metadata?: Record<string, any>,
+    documentType?: string
+  ): Promise<any> {
     if (pageResults.length === 0) {
       return expectedSchema;
     }
@@ -200,6 +206,26 @@ export class LLMService {
       return pageResults[0].data || pageResults[0];
     }
 
+    // Use LLM to intelligently combine multi-page results
+    const prompt = this.buildCombinePrompt(pageResults, expectedSchema, metadata, documentType);
+
+    try {
+      const llmResponse = await this.callLLM(prompt);
+      const combinedResult = JSON.parse(llmResponse);
+
+      // Add metadata about pages
+      combinedResult._pageResults = pageResults;
+      combinedResult._totalPages = pageResults.length;
+
+      return combinedResult;
+    } catch (error) {
+      console.error('Failed to combine page results with LLM:', error);
+      // Fallback to simple combination if LLM fails
+      return this.simpleCombinePageResults(pageResults, expectedSchema);
+    }
+  }
+
+  private simpleCombinePageResults(pageResults: any[], expectedSchema: any): any {
     const combinedResult: any = {};
     const schemaKeys = Object.keys(expectedSchema);
 
@@ -232,6 +258,106 @@ export class LLMService {
     combinedResult._totalPages = pageResults.length;
 
     return combinedResult;
+  }
+
+  private buildCombinePrompt(
+    pageResults: any[],
+    expectedSchema: any,
+    metadata?: Record<string, any>,
+    documentType?: string
+  ): string {
+    let prompt = `You are a document extraction assistant. You have extracted information from a multi-page PDF document, with results from each page separately. Your task is to intelligently combine these page results into a single, coherent final result.`;
+
+    if (documentType) {
+      prompt += `\n\nDocument Type: ${documentType}`;
+    }
+
+    prompt += `\n\nPage Results (${pageResults.length} pages):`;
+
+    for (const pageResult of pageResults) {
+      if (pageResult.data) {
+        prompt += `\n\nPage ${pageResult.page}:\n${JSON.stringify(pageResult.data, null, 2)}`;
+      }
+    }
+
+    // Build enhanced schema with descriptions
+    const enhancedSchema: any = {};
+    if (metadata && Object.keys(metadata).length > 0) {
+      for (const [fieldName, value] of Object.entries(expectedSchema)) {
+        const fieldMeta = metadata[fieldName] as any;
+
+        if (fieldMeta?.type === 'array_of_objects' && Array.isArray(value) && value.length > 0) {
+          const objectSchema: any = {};
+          const childPrefix = `${fieldName}[].`;
+
+          for (const [metaKey, metaValue] of Object.entries(metadata)) {
+            if (metaKey.startsWith(childPrefix)) {
+              const childName = metaKey.substring(childPrefix.length);
+              const childMeta = metaValue as any;
+              let childDescription = childMeta?.description || childName;
+
+              if (childMeta?.type) {
+                const type = childMeta.type.toLowerCase();
+                if (type === 'multiple_choice' && childMeta.choices && Array.isArray(childMeta.choices)) {
+                  childDescription = `${childDescription} (return in one of the options: ${childMeta.choices.join(', ')})`;
+                } else if (type === 'date') {
+                  childDescription = `${childDescription} (return in format YYYY-MM-DD)`;
+                } else if (type === 'datetime') {
+                  childDescription = `${childDescription} (return in format YYYY-MM-DD HH:MM:SS)`;
+                } else if (type === 'time') {
+                  childDescription = `${childDescription} (return in format HH:MM:SS)`;
+                } else if (type === 'boolean') {
+                  childDescription = `${childDescription} (Return in Boolean)`;
+                }
+              }
+
+              objectSchema[childName] = childDescription;
+            }
+          }
+
+          enhancedSchema[fieldName] = Object.keys(objectSchema).length > 0 ? [objectSchema] : value;
+        } else {
+          let description = fieldMeta?.description || value;
+
+          if (fieldMeta?.type) {
+            const type = fieldMeta.type.toLowerCase();
+            if (type === 'multiple_choice' && fieldMeta.choices && Array.isArray(fieldMeta.choices)) {
+              description = `${description} (return in one of the options: ${fieldMeta.choices.join(', ')})`;
+            } else if (type === 'date') {
+              description = `${description} (return in format YYYY-MM-DD)`;
+            } else if (type === 'datetime') {
+              description = `${description} (return in format YYYY-MM-DD HH:MM:SS)`;
+            } else if (type === 'time') {
+              description = `${description} (return in format HH:MM:SS)`;
+            } else if (type === 'boolean') {
+              description = `${description} (Return in Boolean)`;
+            } else if (type === 'array') {
+              description = `${description} (Return in array of value)`;
+            }
+          }
+
+          enhancedSchema[fieldName] = description;
+        }
+      }
+    } else {
+      Object.assign(enhancedSchema, expectedSchema);
+    }
+
+    prompt += `\n\nExpected Final Output Schema:
+${JSON.stringify(enhancedSchema, null, 2)}`;
+
+    prompt += `\n\nInstructions:
+1. Analyze all the page results above
+2. Intelligently combine the information from all pages into a single coherent result
+3. For array fields, merge all items from all pages
+4. For text fields, combine information from all pages where it makes sense
+5. For fields that appear on multiple pages with different values, use the most complete or most recent value
+6. Ensure the final result matches the expected schema structure
+7. Return ONLY the combined JSON result, nothing else
+
+Return the final combined result as a JSON object matching the expected schema.`;
+    console.log(prompt)
+    return prompt;
   }
 
   private buildExtractionPrompt(
