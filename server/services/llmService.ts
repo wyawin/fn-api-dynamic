@@ -180,7 +180,6 @@ export class LLMService {
 
     const result = response.data;
     console.log(result)
-
     // Some models (like qwen2.5-vl:7b) may return data in 'thinking' field
     const llmResponse = result.thinking || result.response;
 
@@ -352,11 +351,13 @@ ${JSON.stringify(enhancedSchema, null, 2)}`;
 3. For array fields, merge all items from all pages
 4. For text fields, combine information from all pages where it makes sense
 5. For fields that appear on multiple pages with different values, use the most complete or most recent value
-6. Ensure the final result matches the expected schema structure
-7. Return ONLY the combined JSON result, nothing else
+6. IMPORTANT: If a field has null values across all pages, keep it as null in the final result
+7. DO NOT force or assume values - only use information that was actually extracted from the pages
+8. Ensure the final result matches the expected schema structure
+9. Return ONLY the combined JSON result, nothing else
 
 Return the final combined result as a JSON object matching the expected schema.`;
-    console.log(prompt)
+
     return prompt;
   }
 
@@ -454,7 +455,9 @@ ${JSON.stringify(enhancedSchema, null, 2)}`;
 4. For fields with choices, only use values from the provided list
 5. For numeric fields with decimal places, format accordingly
 6. Return ONLY valid JSON matching the schema structure
-7. If a field cannot be found, use null or an appropriate default value
+7. IMPORTANT: If you don't find information for a field on this page, return null for that value
+8. DO NOT force or assume values - the information might be on another page of the document
+9. Only extract information that is clearly visible and present on this page
 
 Return the extracted data as JSON:`;
 

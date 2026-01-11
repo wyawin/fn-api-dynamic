@@ -224,15 +224,20 @@ export function ResponseBuilder({ value, onChange, metadata, onMetadataChange }:
     const updated = [...fields];
     const currentField = updated[index];
 
-    if (field.type === 'array_of_objects' && currentField.type !== 'array_of_objects') {
-      updated[index] = { ...currentField, ...field, children: [], expanded: true };
-    } else if (field.type !== 'array_of_objects' && currentField.type === 'array_of_objects') {
-      const { children, expanded, ...rest } = currentField;
-      updated[index] = { ...rest, ...field };
-    } else if (field.type === 'decimal' && currentField.type !== 'decimal') {
-      updated[index] = { ...currentField, ...field, decimalPlaces: 2 };
-    } else if (field.type === 'multiple_choice' && currentField.type !== 'multiple_choice') {
-      updated[index] = { ...currentField, ...field, choices: ['option1', 'option2'] };
+    // Only apply type-change logic if type is explicitly being changed
+    if (field.type !== undefined && field.type !== currentField.type) {
+      if (field.type === 'array_of_objects') {
+        updated[index] = { ...currentField, ...field, children: [], expanded: true };
+      } else if (currentField.type === 'array_of_objects') {
+        const { children, expanded, ...rest } = currentField;
+        updated[index] = { ...rest, ...field };
+      } else if (field.type === 'decimal') {
+        updated[index] = { ...currentField, ...field, decimalPlaces: 2 };
+      } else if (field.type === 'multiple_choice') {
+        updated[index] = { ...currentField, ...field, choices: ['option1', 'option2'] };
+      } else {
+        updated[index] = { ...currentField, ...field };
+      }
     } else {
       updated[index] = { ...currentField, ...field };
     }
