@@ -59,13 +59,12 @@ export class LLMService {
     const prompt = this.buildExtractionPrompt(document, expectedSchema, metadata, documentType);
 
     try {
-      const response = await this.callLLM(prompt, document.filedata ? [document.filedata] : undefined);
-
-      try {
+      const result = await this.retryWithBackoff(async () => {
+        const response = await this.callLLM(prompt, document.filedata ? [document.filedata] : undefined);
         return JSON.parse(response);
-      } catch {
-        return { error: 'Failed to parse LLM response as JSON', raw: response };
-      }
+      });
+
+      return result;
     } catch (error) {
       console.error('Image extraction error:', error);
       if (axios.isAxiosError(error)) {
@@ -152,8 +151,10 @@ export class LLMService {
     const prompt = this.buildExtractionPrompt(enhancedDocument, expectedSchema, metadata, documentType);
 
     try {
-      const llmResponse = await this.callLLM(prompt, [page.imageBase64]);
-      const pageData = JSON.parse(llmResponse);
+      const pageData = await this.retryWithBackoff(async () => {
+        const llmResponse = await this.callLLM(prompt, [page.imageBase64]);
+        return JSON.parse(llmResponse);
+      });
 
       return {
         page: page.pageNumber,
@@ -169,6 +170,33 @@ export class LLMService {
     }
   }
 
+  private async retryWithBackoff<T>(
+    operation: () => Promise<T>,
+    maxRetries: number = 3,
+    baseDelay: number = 1000
+  ): Promise<T> {
+    let lastError: Error | undefined;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error as Error;
+
+        if (attempt === maxRetries) {
+          console.error(`Failed after ${maxRetries} attempts:`, lastError.message);
+          throw lastError;
+        }
+
+        const delay = baseDelay * Math.pow(2, attempt - 1);
+        console.warn(`Attempt ${attempt} failed: ${lastError.message}. Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+
+    throw lastError!;
+  }
+
   private async callLLM(prompt: string, images?: string[]): Promise<string> {
     const response = await this.axiosInstance.post('/api/generate', {
       model: this.config.model,
@@ -179,7 +207,7 @@ export class LLMService {
     });
 
     const result = response.data;
-    console.log(result)
+
     // Some models (like qwen2.5-vl:7b) may return data in 'thinking' field
     const llmResponse = result.thinking || result.response;
 
@@ -209,10 +237,11 @@ export class LLMService {
     const prompt = this.buildCombinePrompt(pageResults, expectedSchema, metadata, documentType);
 
     try {
-      const llmResponse = await this.callLLM(prompt);
-      const combinedResult = JSON.parse(llmResponse);
+      const combinedResult = await this.retryWithBackoff(async () => {
+        const llmResponse = await this.callLLM(prompt);
+        return JSON.parse(llmResponse);
+      });
 
-      // Add metadata about pages
       combinedResult._pageResults = pageResults;
       combinedResult._totalPages = pageResults.length;
 
