@@ -16,6 +16,7 @@ export interface ResponseMetadata {
     description?: string;
     decimalPlaces?: number;
     choices?: string[];
+    example?: any;
   }>;
 }
 

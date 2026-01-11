@@ -7,6 +7,7 @@ interface ResponseField {
   description?: string;
   decimalPlaces?: number;
   choices?: string[];
+  example?: any;
   children?: ResponseField[];
   expanded?: boolean;
 }
@@ -24,6 +25,29 @@ export function ResponseBuilder({ value, onChange, metadata, onMetadataChange }:
   const [lastParsedValue, setLastParsedValue] = useState<string>('');
 
   const getExampleValue = (field: ResponseField): any => {
+    // If user has provided a custom example, use it
+    if (field.example !== undefined && field.example !== '') {
+      try {
+        // Try to parse if it looks like JSON
+        if (typeof field.example === 'string' && (field.example.startsWith('{') || field.example.startsWith('['))) {
+          return JSON.parse(field.example);
+        }
+        // For number type, convert to number
+        if (field.type === 'number' && typeof field.example === 'string') {
+          return parseFloat(field.example);
+        }
+        // For boolean type, convert to boolean
+        if (field.type === 'boolean' && typeof field.example === 'string') {
+          return field.example.toLowerCase() === 'true';
+        }
+        return field.example;
+      } catch {
+        // If parsing fails, use the string value
+        return field.example;
+      }
+    }
+
+    // Default values
     switch (field.type) {
       case 'string':
         return 'example string';
@@ -107,6 +131,7 @@ export function ResponseBuilder({ value, onChange, metadata, onMetadataChange }:
                   description: childMeta.description || '',
                   decimalPlaces: childMeta.decimalPlaces,
                   choices: childMeta.choices,
+                  example: childMeta.example,
                 });
               });
             } else {
@@ -132,6 +157,7 @@ export function ResponseBuilder({ value, onChange, metadata, onMetadataChange }:
               description: fieldMeta.description || '',
               decimalPlaces: fieldMeta.decimalPlaces,
               choices: fieldMeta.choices,
+              example: fieldMeta.example,
             });
           }
         });
@@ -167,10 +193,10 @@ export function ResponseBuilder({ value, onChange, metadata, onMetadataChange }:
         const lastKey = keys[keys.length - 1];
         current[lastKey] = getExampleValue(field);
 
-        // Store metadata (type, description, decimalPlaces, choices)
+        // Store metadata (type, description, decimalPlaces, choices, example)
         // Always store type for special types that would be lost in JSON serialization
         const specialTypes = ['date', 'datetime', 'time', 'url', 'email', 'decimal', 'multiple_choice'];
-        const needsMetadata = field.description || field.decimalPlaces !== undefined || field.choices || specialTypes.includes(field.type);
+        const needsMetadata = field.description || field.decimalPlaces !== undefined || field.choices || field.example !== undefined || specialTypes.includes(field.type);
 
         if (needsMetadata) {
           metadata.fields[field.name] = {
@@ -178,19 +204,21 @@ export function ResponseBuilder({ value, onChange, metadata, onMetadataChange }:
             description: field.description,
             decimalPlaces: field.decimalPlaces,
             choices: field.choices,
+            example: field.example,
           };
         }
 
         // Store metadata for array children
         if (field.type === 'array_of_objects' && field.children) {
           field.children.forEach((child) => {
-            const childNeedsMetadata = child.description || child.decimalPlaces !== undefined || child.choices || specialTypes.includes(child.type);
+            const childNeedsMetadata = child.description || child.decimalPlaces !== undefined || child.choices || child.example !== undefined || specialTypes.includes(child.type);
             if (child.name && child.name.trim() !== '' && childNeedsMetadata) {
               metadata.fields[`${field.name}[].${child.name}`] = {
                 type: child.type,
                 description: child.description,
                 decimalPlaces: child.decimalPlaces,
                 choices: child.choices,
+                example: child.example,
               };
             }
           });
@@ -208,7 +236,7 @@ export function ResponseBuilder({ value, onChange, metadata, onMetadataChange }:
   };
 
   const addField = () => {
-    const updated = [...fields, { name: '', type: 'string', description: '' }];
+    const updated = [...fields, { name: '', type: 'string' as ResponseField['type'], description: '' }];
     setFields(updated);
     if (updated.length === 1 && updated[0].name === '') {
       buildJsonFromFields();
@@ -250,7 +278,7 @@ export function ResponseBuilder({ value, onChange, metadata, onMetadataChange }:
     if (!updated[parentIndex].children) {
       updated[parentIndex].children = [];
     }
-    updated[parentIndex].children!.push({ name: '', type: 'string', description: '' });
+    updated[parentIndex].children!.push({ name: '', type: 'string' as ResponseField['type'], description: '' });
     setFields(updated);
   };
 
@@ -408,13 +436,20 @@ export function ResponseBuilder({ value, onChange, metadata, onMetadataChange }:
                           <X size={18} />
                         </button>
                       </div>
-                      <div className="flex gap-3">
+                      <div className="grid grid-cols-2 gap-3">
                         <input
                           type="text"
                           value={field.description || ''}
                           onChange={(e) => updateField(index, { description: e.target.value })}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                           placeholder="Field description (optional)"
+                        />
+                        <input
+                          type="text"
+                          value={field.example !== undefined ? field.example : ''}
+                          onChange={(e) => updateField(index, { example: e.target.value })}
+                          className="px-3 py-2 border border-blue-300 bg-blue-50 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-mono"
+                          placeholder="Example value (optional)"
                         />
                       </div>
                       {field.type === 'decimal' && (
@@ -547,13 +582,22 @@ export function ResponseBuilder({ value, onChange, metadata, onMetadataChange }:
                                     <X size={16} />
                                   </button>
                                 </div>
-                                <input
-                                  type="text"
-                                  value={child.description || ''}
-                                  onChange={(e) => updateChildField(index, childIndex, { description: e.target.value })}
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm"
-                                  placeholder="Field description (optional)"
-                                />
+                                <div className="grid grid-cols-2 gap-2">
+                                  <input
+                                    type="text"
+                                    value={child.description || ''}
+                                    onChange={(e) => updateChildField(index, childIndex, { description: e.target.value })}
+                                    className="px-2 py-1.5 border border-gray-300 rounded text-sm"
+                                    placeholder="Field description (optional)"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={child.example !== undefined ? child.example : ''}
+                                    onChange={(e) => updateChildField(index, childIndex, { example: e.target.value })}
+                                    className="px-2 py-1.5 border border-blue-300 bg-blue-50 rounded text-sm font-mono"
+                                    placeholder="Example value (optional)"
+                                  />
+                                </div>
                                 {child.type === 'decimal' && (
                                   <div className="flex gap-2 items-center">
                                     <label className="text-xs font-medium text-gray-700">Decimal Places:</label>

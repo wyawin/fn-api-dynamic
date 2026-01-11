@@ -249,7 +249,7 @@ export const generateApiDocumentationPDF = async (endpoints: Endpoint[]) => {
 
         autoTable(doc, {
           startY: yPosition,
-          head: [['Field', 'Type', 'Description']],
+          head: [['Field', 'Type', 'Description', 'Example Value']],
           body: responseFields,
           theme: 'striped',
           headStyles: { fillColor: [250, 216, 90], textColor: [7, 43, 164], fontSize: 10 },
@@ -257,9 +257,10 @@ export const generateApiDocumentationPDF = async (endpoints: Endpoint[]) => {
           margin: { left: margin },
           tableWidth: pageWidth - 2 * margin,
           columnStyles: {
-            0: { cellWidth: 50 },
-            1: { cellWidth: 30 },
-            2: { cellWidth: 'auto' }
+            0: { cellWidth: 40 },
+            1: { cellWidth: 25 },
+            2: { cellWidth: 'auto' },
+            3: { cellWidth: 40 }
           }
         });
         yPosition = (doc as any).lastAutoTable.finalY + 12;
@@ -305,6 +306,12 @@ const extractFieldsWithDescriptionFromResults = (obj: any, metadata: any = {}, p
       const fieldPath = path ? `${path}.${key}` : key;
       const fieldMeta = metadata[fieldPath] || {};
       let description = fieldMeta.description || '';
+      let exampleValue = '';
+
+      // Get example value from metadata if available
+      if (fieldMeta.example !== undefined && fieldMeta.example !== '') {
+        exampleValue = typeof fieldMeta.example === 'string' ? fieldMeta.example : JSON.stringify(fieldMeta.example);
+      }
 
       // Add choices to description if available
       if (fieldMeta.choices && fieldMeta.choices.length > 0) {
@@ -315,14 +322,20 @@ const extractFieldsWithDescriptionFromResults = (obj: any, metadata: any = {}, p
       }
 
       if (value === null) {
-        fields.push([fieldPath, 'null', description || 'Null value']);
+        fields.push([fieldPath, 'null', description || 'Null value', exampleValue]);
       } else if (Array.isArray(value)) {
         if (value.length > 0 && typeof value[0] === 'object' && value[0] !== null) {
-          fields.push([fieldPath, 'array of objects', description || 'Array containing objects']);
+          fields.push([fieldPath, 'array of objects', description || 'Array containing objects', exampleValue]);
           Object.entries(value[0]).forEach(([childKey, childValue]) => {
             const childPath = `${fieldPath}[].${childKey}`;
             const childMeta = metadata[childPath] || {};
             let childDesc = childMeta.description || '';
+            let childExampleValue = '';
+
+            // Get child example value from metadata if available
+            if (childMeta.example !== undefined && childMeta.example !== '') {
+              childExampleValue = typeof childMeta.example === 'string' ? childMeta.example : JSON.stringify(childMeta.example);
+            }
 
             // Add choices to child description if available
             if (childMeta.choices && childMeta.choices.length > 0) {
@@ -333,19 +346,19 @@ const extractFieldsWithDescriptionFromResults = (obj: any, metadata: any = {}, p
             }
 
             const childType = childValue === null ? 'null' : Array.isArray(childValue) ? 'array' : typeof childValue;
-            const exampleVal = getExampleValue(childValue);
-            fields.push([childPath, childType, childDesc || `Example: ${exampleVal}`]);
+            const fallbackExample = childExampleValue || getExampleValue(childValue);
+            fields.push([childPath, childType, childDesc, fallbackExample]);
           });
         } else {
-          const exampleVal = value.length > 0 ? JSON.stringify(value).substring(0, 50) : '[]';
-          fields.push([fieldPath, 'array', description || `Example: ${exampleVal}`]);
+          const fallbackExample = exampleValue || (value.length > 0 ? JSON.stringify(value).substring(0, 50) : '[]');
+          fields.push([fieldPath, 'array', description, fallbackExample]);
         }
       } else if (typeof value === 'object') {
         processObject(value, fieldPath);
       } else {
         const type = typeof value;
-        const exampleValue = String(value);
-        fields.push([fieldPath, type, description || `Example: ${exampleValue}`]);
+        const fallbackExample = exampleValue || String(value);
+        fields.push([fieldPath, type, description, fallbackExample]);
       }
     });
   };

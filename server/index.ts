@@ -25,6 +25,7 @@ interface ResponseMetadata {
     description?: string;
     decimalPlaces?: number;
     choices?: string[];
+    example?: any;
   }>;
 }
 
@@ -58,7 +59,8 @@ const endpointSchema = Joi.object({
         type: Joi.string().optional(),
         description: Joi.string().optional(),
         decimalPlaces: Joi.number().optional(),
-        choices: Joi.array().items(Joi.string()).optional()
+        choices: Joi.array().items(Joi.string()).optional(),
+        example: Joi.any().optional()
       })
     )
   }).optional(),
