@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express, { Request, Response, Router } from 'express';
 import cors from 'cors';
 import fs from 'fs/promises';
@@ -5,6 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import Joi from 'joi';
 import { createLLMService } from './services/llmService.js';
+import { generateDummyResponse } from './services/dummyResponseGenerator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,6 +19,7 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+const API_MODE = process.env.API_MODE || 'sandbox';
 const llmService = createLLMService('qwen3-vl:2b', 'http://localhost:11434');
 
 interface ResponseMetadata {
@@ -144,22 +147,28 @@ const loadDynamicRoutes = async () => {
           const analysisId = crypto.randomUUID();
           const startTime = Date.now();
 
-          const documentData = {
-            filedata: req.body.filedata,
-            fileurl: req.body.fileurl,
-            filename: req.body.filename,
-            filetype: req.body.filetype,
-            description: req.body.description,
-            remark: req.body.remark,
-            password: req.body.password,
-          };
+          let extractedData;
 
-          const extractedData = await llmService.extractDocumentData({
-            document: documentData,
-            expectedSchema: customFields,
-            metadata: endpoint.metadata?.fields,
-            documentType: endpoint.description,
-          });
+          if (API_MODE === 'sandbox') {
+            extractedData = generateDummyResponse(customFields, endpoint.metadata);
+          } else {
+            const documentData = {
+              filedata: req.body.filedata,
+              fileurl: req.body.fileurl,
+              filename: req.body.filename,
+              filetype: req.body.filetype,
+              description: req.body.description,
+              remark: req.body.remark,
+              password: req.body.password,
+            };
+
+            extractedData = await llmService.extractDocumentData({
+              document: documentData,
+              expectedSchema: customFields,
+              metadata: endpoint.metadata?.fields,
+              documentType: endpoint.description,
+            });
+          }
 
           const processingTime = Date.now() - startTime;
 
@@ -315,8 +324,14 @@ const startServer = async () => {
 
   app.listen(PORT, () => {
     console.log(`API server running on http://localhost:${PORT}`);
+    console.log(`API Mode: ${API_MODE.toUpperCase()}`);
     console.log('Management API available at /api/endpoints');
     console.log('Dynamic endpoints loaded and ready');
+    if (API_MODE === 'sandbox') {
+      console.log('⚠️  Running in SANDBOX mode - returning dummy responses based on example values');
+    } else {
+      console.log('✓ Running in PRODUCTION mode - using LLM for document processing');
+    }
   });
 };
 
